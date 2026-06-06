@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurante El Sesteo - Sabor Colonial e Historia frente a la Catedral</title>
+    <!-- Tailwind CSS para diseño moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
+    <style>
+        .font-sans { font-family: 'Inter', sans-serif; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans min-h-screen flex flex-col overflow-x-hidden">
+
+<!-- Contenedor de Toast -->
+<div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 max-w-sm pointer-events-none"></div>
+
+<script>
+    let language = 'es';
+    let selectedTable = null;
+
+    const TABLES_DATABASE = {
+        terraza: [
+            { id: 1, name: 'T1', reserved: false, view_es: 'Catedral Directa', view_en: 'Direct Cathedral View' },
+            { id: 2, name: 'T2', reserved: true, view_es: 'Catedral Directa', view_en: 'Direct Cathedral View' },
+            { id: 3, name: 'T3', reserved: false, view_es: 'Vista Panorámica', view_en: 'Panoramic View' },
+            { id: 4, name: 'T4', reserved: false, view_es: 'Parque Central', view_en: 'Central Park View' },
+            { id: 5, name: 'T5', reserved: true, view_es: 'Parque Central', view_en: 'Central Park View' },
+            { id: 6, name: 'T6', reserved: false, view_es: 'Frente de Balcón', view_en: 'Balcony Front' },
+            { id: 7, name: 'T7', reserved: false, view_es: 'Frente de Balcón', view_en: 'Balcony Front' },
+            { id: 8, name: 'T8', reserved: true, view_es: 'Sombra de Tejas', view_en: 'Tiled Shadow Space' }
+        ],
+        interior: [
+            { id: 9, name: 'I1', reserved: false, view_es: 'Salón Principal', view_en: 'Main Colonial Lounge' },
+            { id: 10, name: 'I2', reserved: false, view_es: 'Cerca del Patio', view_en: 'Near Patio Garden' },
+            { id: 11, name: 'I3', reserved: true, view_es: 'Cerca del Patio', view_en: 'Near Patio Garden' },
+            { id: 12, name: 'I4', reserved: false, view_es: 'Ventilación Central', view_en: 'Main Breeze Lobby' },
+            { id: 13, name: 'I5', reserved: false, view_es: 'Lado de la Galería', view_en: 'By the Art Gallery' },
+            { id: 14, name: 'I6', reserved: true, view_es: 'Lado de la Galería', view_en: 'By the Art Gallery' }
+        ]
+    };
+
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `p-4 rounded-xl shadow-2xl flex items-center gap-3 text-white transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto ${
+            type === 'success' ? 'bg-indigo-950 border border-amber-500/30' : 'bg-rose-800'
+        }`;
+        
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        toast.innerHTML = `
+            <i class="fas ${icon} text-xl text-amber-500"></i>
+            <p class="font-medium text-sm">${message}</p>
+        `;
+        
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.remove('translate-y-2', 'opacity-0');
+        }, 10);
+
+        setTimeout(() => {
+            toast.classList.add('translate-y-2', 'opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    }
+</script>
+
+<!-- HEADER BILINGÜE -->
+<header class="bg-indigo-950 text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+        <a href="#" class="flex items-center gap-2.5">
+            <div class="bg-amber-500 text-indigo-950 p-2.5 rounded-xl shadow-md font-sans">
+                <i class="fa-solid fa-hotel text-lg"></i>
+            </div>
+            <div>
+                <span class="text-[10px] uppercase font-bold text-amber-400 tracking-widest block" data-es="Desde 1974" data-en="Since 1974">Desde 1974</span>
+                <h1 class="text-xl font-bold font-serif leading-tight">El Sesteo</h1>
+            </div>
+        </a>
+
+        <div class="flex items-center gap-4">
+            <div class="flex bg-indigo-900 rounded-lg p-0.5 border border-indigo-800 text-xs">
+                <button onclick="changeLanguage('es')" id="btn-lang-es" class="px-2.5 py-1.5 rounded-md font-bold transition-all bg-amber-500 text-indigo-950">ES</button>
+                <button onclick="changeLanguage('en')" id="btn-lang-en" class="px-2.5 py-1.5 rounded-md font-bold transition-all text-indigo-200">EN</button>
+            </div>
+            <a href="#reservaciones" class="bg-amber-500 hover:bg-amber-400 text-indigo-950 px-4 py-2 rounded-lg text-xs font-extrabold transition-all hidden sm:inline-block shadow-md">
+                <span data-es="Reservar Mesa" data-en="Reserve Table">Reservar Mesa</span>
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- HERO SECTION CON VISTA HISTÓRICA -->
+<section class="relative bg-indigo-950 text-white py-24 px-4 overflow-hidden">
+    <div class="absolute inset-0 bg-cover bg-center opacity-40" style="background-image: url('https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?auto=format&fit=crop&w=1200&q=80');"></div>
+    <div class="max-w-4xl mx-auto text-center relative z-10 space-y-6">
+        <span class="px-4 py-1.5 bg-amber-500/15 text-amber-400 border border-amber-500/30 rounded-full text-xs font-semibold tracking-widest uppercase inline-block">
+            <span data-es="Frente a la Insigne Catedral de León" data-en="Directly In Front of León Cathedral">Frente a la Insigne Catedral de León</span>
+        </span>
+        <h2 class="text-4xl md:text-6xl font-black font-serif tracking-tight leading-tight text-white">
+            <span data-es="Sabores con historia, una vista inigualable" data-en="Flavors with history, an unrivaled colonial view">Sabores con historia, una vista inigualable</span>
+        </h2>
+        <p class="text-slate-300 max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
+            <span data-es="Ubicados en el corazón del centro colonial. Disfruta de nuestra gastronomía tradicional nicaragüense y platillos internacionales en la terraza más codiciada de la ciudad, contemplando el mayor monumento histórico de Nicaragua." data-en="Located in the historic heart of León. Enjoy our authentic Nicaraguan gastronomy and international cuisine on the city's most famous terrace, directly overlooking the largest cathedral in Central America.">Ubicados en el corazón del centro colonial. Disfrute de nuestra gastronomía tradicional nicaragüense y platillos internacionales en la terraza más codiciada de la ciudad, contemplando el mayor monumento histórico de Nicaragua.</span>
+        </p>
+        <div class="pt-4">
+            <a href="#reservaciones" class="bg-amber-500 hover:bg-amber-400 text-indigo-950 px-8 py-4 rounded-xl font-bold text-sm shadow-xl shadow-amber-500/10 inline-block transition-all transform hover:-translate-y-0.5">
+                <i class="fa-solid fa-calendar-check mr-2"></i>
+                <span data-es="Asegurar mi Mesa en la Terraza" data-en="Reserve My Terrace Table Now">Asegurar mi Mesa en la Terraza</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- INTERACTIVO: RESERVA DE MESAS EN VIVO -->
+<section id="reservaciones" class="max-w-6xl mx-auto px-4 py-16 w-full">
+    <div class="text-center space-y-2 mb-12">
+        <span class="text-indigo-900 font-extrabold uppercase tracking-widest text-xs block">
+            <span data-es="Sistema de Reserva Digital Directo" data-en="Direct Digital Booking System">Sistema de Reserva Digital Directo</span>
+        </span>
+        <h3 class="text-3xl font-black font-serif text-indigo-950">
+            <span data-es="Planifica tu Visita en El Sesteo" data-en="Plan Your Dining Experience">Planifica tu Visita en El Sesteo</span>
+        </h3>
+        <p class="text-slate-500 max-w-md mx-auto text-xs">
+            <span data-es="Garantiza tu espacio de forma inmediata. Selecciona tu área preferida y elige una mesa disponible en el mapa dinámico." data-en="Guarantee your spot instantly. Choose your preferred restaurant section and pick a free table on our dynamic floor map.">Garantiza tu espacio de forma inmediata. Selecciona tu área preferida y elige una mesa disponible en el mapa dinámico.</span>
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm">
+        
+        <!-- Formulario izquierdo -->
+        <div class="lg:col-span-5 space-y-4">
+            <h4 class="text-lg font-bold text-indigo-950 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-user-check text-amber-500"></i>
+                <span data-es="1. Tus Datos de Reserva" data-en="1. Reservation Details">1. Tus Datos de Reserva</span>
+            </h4>
+            
+            <div class="space-y-3.5">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-700 block uppercase tracking-wider mb-1">
+                        <span data-es="Nombre Completo" data-en="Full Name">Nombre Completo</span>
+                    </label>
+                    <input type="text" id="res-name" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-950 transition-all">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-700 block uppercase tracking-wider mb-1">
+                        <span data-es="Celular de Contacto (WhatsApp)" data-en="Mobile Number (WhatsApp)">Celular de Contacto (WhatsApp)</span>
+                    </label>
+                    <input type="tel" id="res-phone" placeholder="Ej. +505 8888 8888" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-950 transition-all">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-700 block uppercase tracking-wider mb-1">
+                            <span data-es="Fecha de Visita" data-en="Date of Visit">Fecha de Visita</span>
+                        </label>
+                        <input type="date" id="res-date" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-950 transition-all">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-700 block uppercase tracking-wider mb-1">
+                            <span data-es="Hora" data-en="Time">Hora</span>
+                        </label>
+                        <select id="res-time" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-950 transition-all bg-white">
+                            <option value="12:00">12:00 PM</option>
+                            <option value="13:30">1:30 PM</option>
+                            <option value="16:00">4:00 PM</option>
+                            <option value="18:30">6:30 PM</option>
+                            <option value="20:00">8:00 PM</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-700 block uppercase tracking-wider mb-1">
+                            <span data-es="Personas" data-en="Party Size">Personas</span>
+                        </label>
+                        <select id="res-guests" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-950 transition-all bg-white">
+                            <option value="1">1 Person</option>
+                            <option value="2" selected>2 Persons</option>
+                            <option value="4">4 Persons</option>
+                            <option value="6">6 Persons</option>
+                            <option value="8">8+ Persons</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-700 block uppercase tracking-wider mb-1">
+                            <span data-es="Sección del Local" data-en="Restaurant Area">Sección del Local</span>
+                        </label>
+                        <select id="res-zone" onchange="renderTables()" class="w-full border border-slate-200 bg-slate-50 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-950 transition-all bg-white">
+                            <option value="terraza">Terraza (Frente a Catedral)</option>
+                            <option value="interior">Salón Interior Colonial</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualización de mesas en vivo -->
+        <div class="lg:col-span-7 flex flex-col justify-between">
+            <div class="space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <h4 class="text-lg font-bold text-indigo-950 flex items-center gap-2">
+                        <i class="fa-solid fa-map-marked-alt text-amber-500"></i>
+                        <span data-es="2. Selecciona una Mesa Libre" data-en="2. Choose an Available Table">2. Selecciona una Mesa Libre</span>
+                    </h4>
+                    <span id="selected-table-badge" class="text-xs bg-indigo-950 text-amber-400 px-3 py-1 rounded-full font-bold border border-amber-400">
+                        <span data-es="Mesa: Ninguna" data-en="Table: None">Mesa: Ninguna</span>
+                    </span>
+                </div>
+
+                <!-- Leyenda de Colores -->
+                <div class="flex gap-4 text-xs font-medium text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 bg-emerald-500 rounded-full block"></span> <span data-es="Disponible" data-en="Available">Disponible</span></span>
+                    <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 bg-indigo-950 rounded-full block"></span> <span data-es="Tu Selección" data-en="Your Pick">Tu Selección</span></span>
+                    <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 bg-rose-500 rounded-full block"></span> <span data-es="Ocupada / Reservada" data-en="Occupied">Ocupada / Reservada</span></span>
+                </div>
+
+                <!-- Contenedor del Mapa Visual -->
+                <div id="floor-map-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-100 p-6 rounded-2xl border border-slate-200 min-h-[220px]"></div>
+            </div>
+
+            <button onclick="confirmReservation()" class="w-full bg-indigo-950 hover:bg-indigo-900 text-amber-400 font-bold py-4 px-4 rounded-xl flex items-center justify-center gap-2 transition-all mt-6 shadow-lg shadow-indigo-950/20">
+                <i class="fa-solid fa-bookmark text-lg"></i>
+                <span data-es="Confirmar mi Reserva de Mesa" data-en="Confirm My Table Reservation">Confirmar mi Reserva de Mesa</span>
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- MENÚ TRADICIONAL CLÁSICO -->
+<section class="bg-indigo-950 py-16 text-white">
+    <div class="max-w-6xl mx-auto px-4">
+        <div class="text-center space-y-2 mb-12">
+            <h3 class="text-3xl font-bold font-serif text-white">
+                <span data-es="Nuestra Gastronomía" data-en="Our Cuisine">Nuestra Gastronomía</span>
+            </h3>
+            <p class="text-amber-400 font-sans tracking-widest uppercase text-xs">
+                <span data-es="Sabores auténticos de León" data-en="Authentic León Flavors">Sabores auténticos de León</span>
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 font-sans">
+            <div class="bg-indigo-900/40 p-6 rounded-2xl border border-indigo-800/50 flex gap-4 items-start">
+                <img src="https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&w=150&h=150&q=80" alt="Indio Viejo" class="w-20 h-20 rounded-xl object-cover shrink-0">
+                <div>
+                    <div class="flex justify-between font-bold text-base text-white border-b border-indigo-800 pb-1 mb-1">
+                        <span data-es="Indio Viejo Leones" data-en="Traditional Indio Viejo Stew">Indio Viejo Leones</span>
+                        <span class="text-amber-400">C$ 190</span>
+                    </div>
+                    <p class="text-slate-300 text-xs leading-relaxed" data-es="Guiso tradicional de maíz y carne desmenuzada de res, con notas ácidas de naranja agria y hierbabuena fresca." data-en="Traditional corn-based beef stew cooked with garlic, onions, sweet pepper, mint, and local sour orange.">Guiso tradicional de maíz y carne desmenuzada de res, con notas ácidas de naranja agria y hierbabuena fresca.</p>
+                </div>
+            </div>
+            <div class="bg-indigo-900/40 p-6 rounded-2xl border border-indigo-800/50 flex gap-4 items-start">
+                <img src="https://images.unsplash.com/photo-1534080391025-afb1096293e5?auto=format&fit=crop&w=150&h=150&q=80" alt="Ceviche" class="w-20 h-20 rounded-xl object-cover shrink-0">
+                <div>
+                    <div class="flex justify-between font-bold text-base text-white border-b border-indigo-800 pb-1 mb-1">
+                        <span data-es="Ceviche Colonial de Pescado" data-en="Colonial Fish Ceviche">Ceviche Colonial de Pescado</span>
+                        <span class="text-amber-400">C$ 240</span>
+                    </div>
+                    <p class="text-slate-300 text-xs leading-relaxed" data-es="Corte fresco de pargo rojo curado en limón puro de Corinto, mezclado con cebolla morada picadita y galletas saladas." data-en="Fresh red snapper cubes cured in pure local lime juice, tossed with red onion, cilantro, and crispy crackers.">Corte fresco de pargo rojo curado en limón puro de Corinto, mezclado con cebolla morada picadita y galletas saladas.</p>
+                </div>
+            </div>
+            <div class="bg-indigo-900/40 p-6 rounded-2xl border border-indigo-800/50 flex gap-4 items-start">
+                <img src="https://images.unsplash.com/photo-1543353071-10c8ba85a904?auto=format&fit=crop&w=150&h=150&q=80" alt="Plato Típico" class="w-20 h-20 rounded-xl object-cover shrink-0">
+                <div>
+                    <div class="flex justify-between font-bold text-base text-white border-b border-indigo-800 pb-1 mb-1">
+                        <span data-es="Plato Típico El Sesteo" data-en="El Sesteo Traditional Platter">Plato Típico El Sesteo</span>
+                        <span class="text-amber-400">C$ 295</span>
+                    </div>
+                    <p class="text-slate-300 text-xs leading-relaxed" data-es="Cerdo asado tiernito, porción grande de gallopinto, maduro frito, queso frito, tortita de huevo y ensalada criolla." data-en="Smoked grilled pork loin, freshly fried gallopinto rice, ripe plantain, fried cheese, small tortilla, and cabbage salad.">Cerdo asado tiernito, porción grande de gallopinto, maduro frito, queso frito, tortita de huevo y ensalada criolla.</p>
+                </div>
+            </div>
+            <div class="bg-indigo-900/40 p-6 rounded-2xl border border-indigo-800/50 flex gap-4 items-start">
+                <img src="https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=150&h=150&q=80" alt="Tiste" class="w-20 h-20 rounded-xl object-cover shrink-0">
+                <div>
+                    <div class="flex justify-between font-bold text-base text-white border-b border-indigo-800 pb-1 mb-1">
+                        <span data-es="Tradicional Tiste Leonés" data-en="Leonés Tiste Beverage">Tradicional Tiste Leonés</span>
+                        <span class="text-amber-400">C$ 60</span>
+                    </div>
+                    <p class="text-slate-300 text-xs leading-relaxed" data-es="Bebida fría típica a base de maíz molido tostado y cacao con especias, servido en jícaras tradicionales." data-en="Chilled traditional drink prepared with toasted corn meal, cocoa powder, sugar, and spiced cinnamon.">Bebida fría típica a base de maíz molido tostado y cacao con especias, servido en jícaras tradicionales.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- PIE DE PÁGINA COLONIAL -->
+<footer class="bg-slate-900 text-slate-400 py-12 px-4 border-t border-slate-800 font-sans text-xs">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 leading-relaxed">
+        <div>
+            <h4 class="text-white font-serif text-lg font-bold mb-3">Restaurante El Sesteo</h4>
+            <p data-es="La ventana gastronómica preferida por viajeros locales e internacionales desde hace más de cinco décadas en el centro de León." data-en="The favorite dining window for local and international travelers for over five decades in downtown León.">La ventana gastronómica preferida por viajeros locales e internacionales desde hace más de cinco décadas en el centro de León.</p>
+        </div>
+        <div>
+            <h4 class="text-white font-serif text-lg font-bold mb-3" data-es="Dirección" data-en="Location">Dirección</h4>
+            <p data-es="Esquina norte del Parque Central, frente a la Real Basílica Catedral. León, Nicaragua." data-en="North corner of Central Park, directly across from the Royal Cathedral Basilica. León, Nicaragua.">Esquina norte del Parque Central, frente a la Real Basílica Catedral. León, Nicaragua.</p>
+        </div>
+        <div>
+            <h4 class="text-white font-serif text-lg font-bold mb-3" data-es="Contacto Directo" data-en="Direct Contact">Contacto Directo</h4>
+            <p>reservaciones@elsesteoleon.com<br>+505 2311 1234 / +505 8765 4321</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+    function changeLanguage(lang) {
+        language = lang;
+        
+        // Estilizar botones de selector
+        if (lang === 'es') {
+            document.getElementById('btn-lang-es').className = "px-2.5 py-1.5 rounded-md font-bold transition-all bg-amber-500 text-indigo-950";
+            document.getElementById('btn-lang-en').className = "px-2.5 py-1.5 rounded-md font-bold transition-all text-indigo-200";
+        } else {
+            document.getElementById('btn-lang-en').className = "px-2.5 py-1.5 rounded-md font-bold transition-all bg-amber-500 text-indigo-950";
+            document.getElementById('btn-lang-es').className = "px-2.5 py-1.5 rounded-md font-bold transition-all text-indigo-200";
+        }
+
+        // Buscar elementos traducibles
+        document.querySelectorAll('[data-es]').forEach(el => {
+            el.innerHTML = lang === 'es' ? el.getAttribute('data-es') : el.getAttribute('data-en');
+        });
+
+        renderTables();
+        updateTableBadge();
+    }
+
+    function renderTables() {
+        const zone = document.getElementById('res-zone').value;
+        const grid = document.getElementById('floor-map-grid');
+        grid.innerHTML = '';
+
+        const db = TABLES_DATABASE[zone];
+        db.forEach(table => {
+            let stateClass = "bg-emerald-500 hover:bg-emerald-600 text-white cursor-pointer hover:scale-105";
+            if (table.reserved) {
+                stateClass = "bg-rose-500 text-rose-100 cursor-not-allowed opacity-80";
+            } else if (selectedTable && selectedTable.id === table.id) {
+                stateClass = "bg-indigo-950 text-amber-400 border-2 border-amber-500 scale-105 shadow-md";
+            }
+
+            const viewDesc = language === 'es' ? table.view_es : table.view_en;
+
+            grid.innerHTML += `
+                <div onclick="${table.reserved ? '' : `selectFloorTable(${table.id}, '${table.name}')`}" 
+                     class="${stateClass} p-4 rounded-2xl flex flex-col items-center justify-center text-center smooth-transition shadow-sm">
+                    <span class="font-extrabold text-base">${table.name}</span>
+                    <span class="text-[9px] opacity-90 leading-tight block mt-1">${viewDesc}</span>
+                </div>
+            `;
+        });
+    }
+
+    function selectFloorTable(id, name) {
+        selectedTable = { id, name };
+        renderTables();
+        updateTableBadge();
+        const notification = language === 'es' ? `Mesa ${name} seleccionada.` : `Table ${name} selected.`;
+        showToast(notification);
+    }
+
+    function updateTableBadge() {
+        const badge = document.getElementById('selected-table-badge');
+        if (selectedTable) {
+            badge.innerHTML = language === 'es' ? `Mesa: ${selectedTable.name}` : `Table: ${selectedTable.name}`;
+            badge.className = "text-xs bg-indigo-950 text-amber-400 px-3 py-1 rounded-full font-bold border border-amber-400 animate-pulse";
+        } else {
+            badge.innerHTML = language === 'es' ? 'Mesa: Ninguna' : 'Table: None';
+            badge.className = "text-xs bg-indigo-950 text-amber-400 px-3 py-1 rounded-full font-bold border border-transparent";
+        }
+    }
+
+    function confirmReservation() {
+        const name = document.getElementById('res-name').value.trim();
+        const phone = document.getElementById('res-phone').value.trim();
+        const date = document.getElementById('res-date').value;
+        const time = document.getElementById('res-time').value;
+        const guests = document.getElementById('res-guests').value;
+        const zone = document.getElementById('res-zone').value;
+
+        if (!name || !phone || !date) {
+            const err = language === 'es' ? 'Completa tu nombre, teléfono y fecha de visita.' : 'Please enter your name, phone and visit date.';
+            showToast(err, 'error');
+            return;
+        }
+
+        if (!selectedTable) {
+            const err = language === 'es' ? 'Por favor selecciona una mesa verde del mapa.' : 'Please select an available table from the floor map.';
+            showToast(err, 'error');
+            return;
+        }
+
+        const successMsg = language === 'es' 
+            ? `¡Reserva exitosa! Mesa ${selectedTable.name} asegurada para ${name} el ${date} a las ${time}.`
+            : `Reservation confirmed! Table ${selectedTable.name} has been held for ${name} on ${date} at ${time}.`;
+
+        showToast(successMsg, 'success');
+
+        // Reiniciar formulario
+        document.getElementById('res-name').value = '';
+        document.getElementById('res-phone').value = '';
+        document.getElementById('res-date').value = '';
+        selectedTable = null;
+        updateTableBadge();
+        renderTables();
+    }
+
+    window.onload = function() {
+        renderTables();
+    };
+</script>
+</body>
+</html>

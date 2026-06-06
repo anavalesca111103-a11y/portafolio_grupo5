@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barista Coffee Shop - Café de Especialidad y Academia de Altura</title>
+    <!-- Tailwind CSS para estilizado robusto -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para iconografía -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        .font-sans { font-family: 'Inter', sans-serif; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f5f5f4; }
+        ::-webkit-scrollbar-thumb { background: #d97706; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800 font-sans min-h-screen flex flex-col overflow-x-hidden">
+
+<!-- Contenedor para Notificaciones de Toast -->
+<div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 max-w-sm pointer-events-none"></div>
+
+<script>
+    let cart = [];
+    let selectedCourse = { name: '', price: 0 };
+
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `p-4 rounded-xl shadow-2xl flex items-center gap-3 text-white transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto ${
+            type === 'success' ? 'bg-amber-800 border border-amber-600/30' : 'bg-red-800'
+        }`;
+        
+        const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+        toast.innerHTML = `
+            <i class="fas ${icon} text-xl text-amber-400"></i>
+            <p class="font-medium text-sm">${message}</p>
+        `;
+        
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.remove('translate-y-2', 'opacity-0');
+        }, 10);
+
+        setTimeout(() => {
+            toast.classList.add('translate-y-2', 'opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    }
+</script>
+
+<!-- HEADER / BARRA DE NAVEGACIÓN -->
+<header class="bg-stone-900 text-stone-100 shadow-md sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+        <a href="#" class="flex items-center gap-2.5">
+            <div class="bg-amber-600 text-stone-900 p-2.5 rounded-full shadow-lg">
+                <i class="fa-solid fa-mug-hot text-lg"></i>
+            </div>
+            <div>
+                <span class="text-[10px] uppercase font-bold text-amber-500 tracking-widest block">Matagalpa Premium</span>
+                <h1 class="text-lg font-black leading-tight tracking-tight">Barista Coffee Shop</h1>
+            </div>
+        </a>
+
+        <div class="flex items-center gap-4">
+            <nav class="hidden md:flex gap-6 text-sm font-semibold text-stone-300">
+                <a href="#granos-seleccionados" class="hover:text-amber-500 transition-colors">Comprar Café</a>
+                <a href="#suscripciones" class="hover:text-amber-500 transition-colors">Suscripciones</a>
+                <a href="#academia" class="hover:text-amber-500 transition-colors">Cursos de Barismo</a>
+            </nav>
+            <button onclick="toggleCart()" class="relative bg-amber-600 hover:bg-amber-700 text-stone-900 p-3 rounded-full flex items-center justify-center font-bold smooth-transition shadow-lg shadow-amber-600/10">
+                <i class="fa-solid fa-shopping-bag text-lg"></i>
+                <span id="cart-badge" class="absolute -top-1 -right-1 bg-stone-900 text-amber-500 px-1.5 py-0.5 rounded-full text-[9px] font-black">0</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- HERO BRAND SECTION -->
+<section class="relative bg-gradient-to-r from-stone-950 to-stone-900 text-stone-100 py-20 px-4 overflow-hidden">
+    <div class="absolute inset-0 bg-cover bg-center opacity-25" style="background-image: url('https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1200&q=80');"></div>
+    <div class="max-w-6xl mx-auto relative z-10 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+        <div class="space-y-6">
+            <span class="px-3.5 py-1.5 bg-amber-500/15 text-amber-400 border border-amber-500/30 rounded-full text-xs font-bold tracking-widest uppercase inline-block">100% Arábica de Altura</span>
+            <h2 class="text-4xl md:text-6xl font-black tracking-tight leading-none text-white font-serif">
+                El orgullo cafetalero de las montañas del norte
+            </h2>
+            <p class="text-stone-300 text-sm md:text-base leading-relaxed">
+                Seleccionamos granos finos cultivados a más de 1,200 metros sobre el nivel del mar en las cordilleras de Matagalpa. Tostado de precisión en lotes artesanales pequeños para garantizar frescura absoluta en cada empaque.
+            </p>
+            <div class="flex flex-wrap gap-4 pt-2">
+                <a href="#granos-seleccionados" class="bg-amber-600 hover:bg-amber-700 text-stone-950 px-7 py-3.5 rounded-xl font-extrabold text-sm shadow-xl shadow-amber-600/10 inline-block transition-all transform hover:-translate-y-0.5">
+                    <i class="fa-solid fa-basket-shopping mr-2"></i>Comprar Granos
+                </a>
+                <a href="#suscripciones" class="bg-stone-850 hover:bg-stone-800 text-stone-200 px-7 py-3.5 rounded-xl font-bold text-sm inline-block transition-all border border-stone-750">
+                    Suscripción de Café
+                </a>
+            </div>
+        </div>
+        <div class="flex justify-center">
+            <div class="bg-stone-900/90 p-8 rounded-3xl border border-stone-800 text-center max-w-sm shadow-2xl">
+                <div class="text-amber-500 text-4xl mb-3"><i class="fa-solid fa-award"></i></div>
+                <h4 class="text-white font-extrabold text-lg mb-2">Pioneros de Especialidad</h4>
+                <p class="text-stone-400 text-xs leading-relaxed">Educamos y capacitamos a los apasionados de la caficultura nacional a través de nuestro laboratorio certificado en Matagalpa.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- COMPRA DE GRANOS -->
+<section id="granos-seleccionados" class="max-w-6xl mx-auto px-4 py-16 w-full">
+    <div class="text-center space-y-2 mb-12">
+        <span class="text-amber-600 font-extrabold uppercase tracking-widest text-xs block">Nuestras Variedades de Altura</span>
+        <h3 class="text-3xl font-extrabold text-stone-900">Café de Especialidad Empacado</h3>
+        <p class="text-stone-500 max-w-md mx-auto text-xs leading-relaxed">Bolsas resellables de 450 gramos con válvula desgasificadora desgasificante para resguardar aromas.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="product-items-grid"></div>
+</section>
+
+<!-- SUSCRIPCIONES PERSONALIZADAS -->
+<section id="suscripciones" class="bg-stone-900 text-stone-100 py-16 px-4 border-t border-b border-stone-800">
+    <div class="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+        <div class="lg:col-span-5 space-y-4">
+            <span class="text-amber-500 font-bold uppercase tracking-wider text-xs">Despacho Directo & Automático</span>
+            <h3 class="text-3xl font-black text-white leading-tight font-serif">Suscripción Mensual de Café</h3>
+            <p class="text-stone-300 text-sm leading-relaxed">
+                Olvídate de quedarte sin café por las mañanas. Elige tu variedad preferida, dinos cuál es tu tipo de molienda ideal y recibe café fresco tostado de la semana en la puerta de tu hogar cada mes o quince días de forma automática.
+            </p>
+            <div class="bg-stone-950 p-4 rounded-xl border border-stone-800 space-y-2.5 text-xs text-stone-400">
+                <div class="flex items-center gap-2"><i class="fa-solid fa-rotate text-emerald-500"></i> Cancela o altera tus entregas en cualquier momento.</div>
+                <div class="flex items-center gap-2"><i class="fa-solid fa-truck-fast text-emerald-500"></i> Envío rápido prioritario con rasreo nacional.</div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-7 bg-stone-950 p-6 rounded-3xl border border-stone-800/80 space-y-6 shadow-2xl">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-bold text-stone-400 block uppercase tracking-wider mb-1">1. Variedad de Café</label>
+                    <select id="sub-type" onchange="updateSubscriptionCost()" class="w-full bg-stone-900 border border-stone-800 text-white rounded-lg p-2.5 text-sm focus:ring-1 focus:ring-amber-500 transition-all">
+                        <option value="pacamara">Pacamara Orgánico (Aromático)</option>
+                        <option value="bourbon">Bourbon Notas de Chocolate</option>
+                        <option value="caturra">Caturra Tradicional Suave</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-stone-400 block uppercase tracking-wider mb-1">2. Tipo de Molienda</label>
+                    <select id="sub-grind" class="w-full bg-stone-900 border border-stone-800 text-white rounded-lg p-2.5 text-sm focus:ring-1 focus:ring-amber-500 transition-all">
+                        <option value="grano">En Grano Entero</option>
+                        <option value="espresso">Molienda Fina (Espresso)</option>
+                        <option value="filtrado" selected>Molienda Media (Goteo/Filtro)</option>
+                        <option value="prensa">Molienda Gruesa (Prensa Francesa)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-bold text-stone-400 block uppercase tracking-wider mb-1">3. Frecuencia de Despacho</label>
+                    <select id="sub-freq" onchange="updateSubscriptionCost()" class="w-full bg-stone-900 border border-stone-800 text-white rounded-lg p-2.5 text-sm focus:ring-1 focus:ring-amber-500 transition-all">
+                        <option value="quincenal">Cada 15 días</option>
+                        <option value="mensual" selected>Mensual (Un despacho)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-stone-400 block uppercase tracking-wider mb-1">4. Cantidad de bolsas (450g)</label>
+                    <input type="number" id="sub-qty" min="1" max="10" value="1" oninput="updateSubscriptionCost()" class="w-full bg-stone-900 border border-stone-800 text-white rounded-lg p-2.5 text-sm focus:ring-1 focus:ring-amber-500 transition-all">
+                </div>
+            </div>
+
+            <div class="border-t border-stone-800 pt-4 flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <span class="text-stone-400 text-xs font-semibold">Costo mensual estimado:</span>
+                    <div class="text-2xl font-black text-amber-500" id="sub-calculated-cost">C$ 350.00 / mes</div>
+                </div>
+                <button onclick="requestSubscription()" class="bg-amber-600 hover:bg-amber-700 text-stone-950 font-bold px-6 py-3 rounded-xl text-xs transition-all flex items-center gap-2 shadow-lg shadow-amber-950/40">
+                    <i class="fa-solid fa-mug-hot"></i> Iniciar Suscripción
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ACADEMIA DE BARISMO -->
+<section id="academia" class="max-w-6xl mx-auto px-4 py-16 w-full">
+    <div class="text-center space-y-2 mb-12">
+        <span class="text-amber-600 font-extrabold uppercase tracking-widest text-xs block">Cultura Educativa</span>
+        <h3 class="text-3xl font-extrabold text-stone-900">Talleres & Cursos Profesionales</h3>
+        <p class="text-stone-500 max-w-md mx-auto text-xs">Clases prácticas presenciales impartidas en nuestro laboratorio central por baristas y catadores con certificación internacional.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-white rounded-2xl shadow-sm border border-stone-200/60 overflow-hidden flex flex-col justify-between">
+            <div class="h-48 overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=600&q=80" alt="Curso barismo" class="w-full h-full object-cover">
+            </div>
+            <div class="p-6 flex-grow flex flex-col justify-between">
+                <div>
+                    <span class="bg-amber-500/10 text-amber-700 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider inline-block mb-3">Nivel Inicial</span>
+                    <h4 class="text-xl font-bold text-stone-900 mb-2">Introducción al Barismo de Especialidad</h4>
+                    <p class="text-stone-500 text-xs mb-4 leading-relaxed">Aprende la historia del cultivo, métodos de extracción de café filtrado (V60, Chemex, Aeropress), calibración básica de espresso comercial y vaporización correcta de leche.</p>
+                    <div class="text-stone-600 text-xs space-y-2 mb-6 bg-stone-50 p-3 rounded-xl border border-stone-100">
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-calendar text-amber-600 w-4"></i> Fecha: Sábado 14 de Junio</div>
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-clock text-amber-600 w-4"></i> Duración total: 8 horas teóricas-prácticas</div>
+                        <div class="text-amber-600 font-bold text-sm mt-1.5">Inversión: C$ 1,800.00 (Incluye materia prima)</div>
+                    </div>
+                </div>
+                <button onclick="openCourseEnrollment('Introducción al Barismo', 1800)" class="w-full bg-stone-900 hover:bg-stone-800 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all">
+                    Reservar Cupo del Taller
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-stone-200/60 overflow-hidden flex flex-col justify-between">
+            <div class="h-48 overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1570968915860-54d5c301fc9f?auto=format&fit=crop&w=600&q=80" alt="Curso Arte Latte" class="w-full h-full object-cover">
+            </div>
+            <div class="p-6 flex-grow flex flex-col justify-between">
+                <div>
+                    <span class="bg-amber-500/10 text-amber-700 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider inline-block mb-3">Nivel Intermedio</span>
+                    <h4 class="text-xl font-bold text-stone-900 mb-2">Taller Práctico de Arte Latte</h4>
+                    <p class="text-stone-500 text-xs mb-4 leading-relaxed">Domina la elaboración de figuras clásicas de barismo (hoja, corazón, tulipán) puliendo tu técnica de caída y simetría. Clases cien por ciento prácticas en máquina profesional.</p>
+                    <div class="text-stone-600 text-xs space-y-2 mb-6 bg-stone-50 p-3 rounded-xl border border-stone-100">
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-calendar text-amber-600 w-4"></i> Fecha: Domingo 21 de Junio</div>
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-clock text-amber-600 w-4"></i> Duración total: 6 horas de pura práctica</div>
+                        <div class="text-amber-600 font-bold text-sm mt-1.5">Inversión: C$ 2,200.00 (Práctica en estación individual)</div>
+                    </div>
+                </div>
+                <button onclick="openCourseEnrollment('Taller de Arte Latte', 2200)" class="w-full bg-stone-900 hover:bg-stone-800 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all">
+                    Reservar Cupo del Taller
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER GENERAL -->
+<footer class="bg-stone-900 text-stone-400 py-12 px-4 border-t border-stone-800 text-xs leading-relaxed">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+            <h4 class="text-white font-bold mb-3 font-serif text-sm">Barista Coffee Shop</h4>
+            <p>Trabajamos de la mano con pequeños caficultores de Matagalpa para fomentar el consumo nacional de café de alta calidad y certificar nuevos baristas.</p>
+            <p class="text-stone-600 mt-4">© 2026 Barista Coffee Shop. Matagalpa, Nicaragua.</p>
+        </div>
+        <div>
+            <h4 class="text-white font-bold mb-3 text-sm">Sede Central</h4>
+            <p>Costado norte de la Catedral San Pedro.<br>Matagalpa, Nicaragua.</p>
+        </div>
+        <div>
+            <h4 class="text-white font-bold mb-3 text-sm">Horario</h4>
+            <p>Lunes a Sábado: 7:00 AM - 7:00 PM<br>Domingo: 9:00 AM - 6:00 PM</p>
+        </div>
+    </div>
+</footer>
+
+<!-- CART SHOP DRAWER -->
+<div id="cart-drawer" class="fixed inset-0 bg-stone-950/80 backdrop-blur-sm z-50 hidden flex justify-end">
+    <div class="w-full max-w-md bg-white text-stone-800 h-full flex flex-col justify-between shadow-2xl relative">
+        <div class="p-6 border-b border-stone-150 flex justify-between items-center bg-stone-50">
+            <h4 class="text-lg font-bold text-stone-900 flex items-center gap-2"><i class="fa-solid fa-shopping-bag text-amber-600"></i> Bolsa de Café</h4>
+            <button onclick="toggleCart()" class="text-stone-400 hover:text-stone-800 p-2 rounded-lg hover:bg-stone-100 transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        
+        <div id="cart-items-list" class="flex-grow overflow-y-auto p-6 space-y-4"></div>
+
+        <div class="p-6 border-t border-stone-150 bg-stone-50 space-y-4">
+            <div class="space-y-2 text-sm text-stone-650">
+                <div class="flex justify-between"><span>Subtotal del café:</span><span id="cart-subtotal" class="font-bold text-stone-900">C$ 0.00</span></div>
+                <div class="flex justify-between"><span>Envío (Matagalpa / Nacional):</span><span id="cart-delivery" class="font-bold text-stone-900">C$ 60.00</span></div>
+                <div class="flex justify-between text-base font-extrabold text-amber-600 pt-2 border-t border-stone-200">
+                    <span>Total de Compra:</span><span id="cart-total" class="font-black text-xl">C$ 0.00</span>
+                </div>
+            </div>
+
+            <!-- Datos cliente -->
+            <div class="space-y-3 pt-2">
+                <div>
+                    <label class="text-[10px] font-bold text-stone-700 block uppercase tracking-wider mb-1">Nombre Completo</label>
+                    <input type="text" id="order-name" placeholder="Ej. Ana Solís" class="w-full border border-stone-200 rounded-xl p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all bg-white shadow-sm">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-stone-700 block uppercase tracking-wider mb-1">Dirección de Entrega / Departamento</label>
+                    <input type="text" id="order-address" placeholder="Ej. Matagalpa, del Parque Central 1c al oeste, casa esquinera" class="w-full border border-stone-200 rounded-xl p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all bg-white shadow-sm">
+                </div>
+            </div>
+
+            <button onclick="submitCartOrder()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all mt-4">
+                <i class="fa-brands fa-whatsapp text-lg"></i> Completar Pedido por WhatsApp
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE ACADEMIA -->
+<div id="course-enrollment-modal" class="fixed inset-0 bg-stone-950/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white text-stone-800 max-w-md w-full rounded-2xl p-6 shadow-2xl relative space-y-4 animate-scaleUp">
+        <button onclick="closeCourseEnrollment()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-800 p-2 rounded-lg hover:bg-stone-100 transition-colors">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <h4 class="text-lg font-bold text-stone-900 pr-6 font-serif"><i class="fa-solid fa-graduation-cap text-amber-600 mr-2"></i> Inscripción a la Academia</h4>
+        <div class="bg-stone-50 p-4 rounded-xl border border-stone-200 text-xs">
+            <div class="text-stone-400 font-semibold mb-1">Taller Seleccionado:</div>
+            <div id="modal-selected-course" class="font-extrabold text-stone-900 text-sm">Nombre Curso</div>
+            <div id="modal-selected-price" class="text-amber-600 font-black text-sm mt-1">C$ 0.00</div>
+        </div>
+        <div class="space-y-3">
+            <div>
+                <label class="text-[10px] font-bold text-stone-700 block uppercase tracking-wider mb-1">Nombre Completo del Alumno</label>
+                <input type="text" id="course-student-name" class="w-full border border-stone-200 rounded-xl p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-stone-700 block uppercase tracking-wider mb-1">WhatsApp para Envío de Datos de Pago</label>
+                <input type="tel" id="course-student-phone" placeholder="Ej. 8888 8888" class="w-full border border-stone-200 rounded-xl p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all">
+            </div>
+        </div>
+        <button onclick="submitCourseEnrollment()" class="w-full bg-amber-600 hover:bg-amber-700 text-stone-950 font-bold py-3.5 px-4 rounded-xl transition-all">
+            Inscribirme y Recibir Datos de Pago
+        </button>
+    </div>
+</div>
+
+<script>
+    // Variedades de café reales con fotos premium espectaculares de granos y tazas
+    const PRODUCTS_DATA = [
+        { id: 'b1', name: 'Café Pacamara Orgánico', price: 350, desc: 'Perfil complejo con notas florales pronunciadas, acidez balanceada de manzana verde y cuerpo sedoso. De la Finca Apante (450g).', img: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=500&q=80' },
+        { id: 'b2', name: 'Café Bourbon Tostado Oscuro', price: 320, desc: 'Taza con un perfil achocolatado muy marcado, dulzura densa que recuerda a melaza y almendra tostada. Ideal para espresso (450g).', img: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=500&q=80' },
+        { id: 'b3', name: 'Café Caturra Lavado', price: 290, desc: 'Taza limpia, notas cítricas y frutales muy agradables. Cosechado manualmente a 1,200 metros bajo sombra natural (450g).', img: 'https://images.unsplash.com/photo-1610631780747-aa9d8b7a4a90?auto=format&fit=crop&w=500&q=80' }
+    ];
+
+    function renderProducts() {
+        const grid = document.getElementById('product-items-grid');
+        grid.innerHTML = '';
+        PRODUCTS_DATA.forEach(p => {
+            grid.innerHTML += `
+                <div class="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between group hover:shadow-xl transition-all duration-300">
+                    <div class="overflow-hidden relative h-48">
+                        <img src="${p.img}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <span class="absolute top-3 left-3 bg-stone-950/80 backdrop-blur-md text-amber-500 font-extrabold text-xs px-2.5 py-1 rounded-full">C$ ${p.price}.00</span>
+                    </div>
+                    <div class="p-6 flex-grow flex flex-col justify-between">
+                        <div class="space-y-2 mb-4">
+                            <h4 class="text-lg font-bold text-stone-950 font-serif">${p.name}</h4>
+                            <p class="text-stone-550 text-xs leading-relaxed">${p.desc}</p>
+                        </div>
+                        <div class="pt-4 border-t border-stone-100 flex items-center justify-between">
+                            <span class="text-stone-900 font-black text-lg">C$ ${p.price}.00</span>
+                            <button onclick="addToCart('${p.id}')" class="bg-stone-900 hover:bg-stone-800 text-amber-500 font-bold py-2.5 px-4 rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-md">
+                                <i class="fa-solid fa-cart-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function addToCart(id) {
+        const product = PRODUCTS_DATA.find(p => p.id === id);
+        const existing = cart.find(i => i.id === id);
+        if (existing) {
+            existing.qty++;
+        } else {
+            cart.push({ ...product, qty: 1 });
+        }
+        showToast(`Agregado a tu bolsa: ${product.name}`);
+        updateCartUI();
+    }
+
+    function toggleCart() {
+        document.getElementById('cart-drawer').classList.toggle('hidden');
+    }
+
+    function changeQty(id, delta) {
+        const item = cart.find(i => i.id === id);
+        if (item) {
+            item.qty += delta;
+            if (item.qty <= 0) {
+                cart = cart.filter(i => i.id !== id);
+            }
+            updateCartUI();
+        }
+    }
+
+    function updateCartUI() {
+        const container = document.getElementById('cart-items-list');
+        const badge = document.getElementById('cart-badge');
+        container.innerHTML = '';
+
+        let subtotal = 0;
+        let totalCount = 0;
+
+        if (cart.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-16 text-stone-400 space-y-3">
+                    <i class="fa-solid fa-mug-hot text-5xl text-stone-200"></i>
+                    <p class="text-sm font-medium">No has agregado empaques de café.</p>
+                </div>
+            `;
+        } else {
+            cart.forEach(item => {
+                subtotal += item.price * item.qty;
+                totalCount += item.qty;
+                container.innerHTML += `
+                    <div class="flex justify-between items-center py-3.5 border-b border-stone-100 gap-4">
+                        <div class="flex-grow">
+                            <h5 class="text-sm font-bold text-stone-900 leading-snug">${item.name}</h5>
+                            <span class="text-xs text-amber-600 font-black">C$ ${item.price}.00</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="changeQty('${item.id}', -1)" class="w-7 h-7 bg-stone-100 hover:bg-stone-200 rounded-full flex items-center justify-center text-stone-600 font-black transition-colors">-</button>
+                            <span class="text-sm font-bold w-6 text-center text-stone-900">${item.qty}</span>
+                            <button onclick="changeQty('${item.id}', 1)" class="w-7 h-7 bg-stone-100 hover:bg-stone-200 rounded-full flex items-center justify-center text-stone-600 font-black transition-colors">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        badge.innerText = totalCount;
+        
+        const delivery = subtotal === 0 ? 0 : 60;
+        const total = subtotal + delivery;
+
+        document.getElementById('cart-subtotal').innerText = `C$ ${subtotal}.00`;
+        document.getElementById('cart-delivery').innerText = `C$ ${delivery}.00`;
+        document.getElementById('cart-total').innerText = `C$ ${total}.00`;
+    }
+
+    function updateSubscriptionCost() {
+        const type = document.getElementById('sub-type').value;
+        const frequency = document.getElementById('sub-freq').value;
+        const qty = parseInt(document.getElementById('sub-qty').value) || 1;
+
+        let bagPrice = 350; // Pacamara
+        if (type === 'bourbon') bagPrice = 320;
+        else if (type === 'caturra') bagPrice = 290;
+
+        let subtotal = bagPrice * qty;
+        let formattedLabel = '';
+
+        if (frequency === 'quincenal') {
+            formattedLabel = `C$ ${subtotal * 2}.00 / mes (2 despachos quincenales)`;
+        } else {
+            formattedLabel = `C$ ${subtotal}.00 / mes (1 despacho mensual)`;
+        }
+
+        document.getElementById('sub-calculated-cost').innerText = formattedLabel;
+    }
+
+    function requestSubscription() {
+        const typeText = document.getElementById('sub-type').options[document.getElementById('sub-type').selectedIndex].text;
+        const grindText = document.getElementById('sub-grind').options[document.getElementById('sub-grind').selectedIndex].text;
+        const freqText = document.getElementById('sub-freq').options[document.getElementById('sub-freq').selectedIndex].text;
+        const qty = document.getElementById('sub-qty').value;
+
+        let msg = `*Nueva Suscripción de Café Directa (Matagalpa)*\n`;
+        msg += `=====================================\n`;
+        msg += `🌱 *Café:* ${typeText}\n`;
+        msg += `⚙️ *Molienda:* ${grindText}\n`;
+        msg += `📅 *Frecuencia:* ${freqText}\n`;
+        msg += `📦 *Cantidad:* ${qty} bolsa(s) por entrega\n`;
+        msg += `=====================================\n`;
+        msg += `_¡Deseo activar esta suscripción hoy! Contáctenme para coordinar mis datos de entrega._`;
+
+        const encoded = encodeURIComponent(msg);
+        showToast('Preparando tu suscripción. Redirigiendo a WhatsApp...', 'success');
+        setTimeout(() => {
+            window.open(`https://wa.me/50588888888?text=${encoded}`, '_blank');
+        }, 1200);
+    }
+
+    function submitCartOrder() {
+        const name = document.getElementById('order-name').value.trim();
+        const address = document.getElementById('order-address').value.trim();
+
+        if (cart.length === 0) {
+            showToast('Agrega café a tu bolsa de compra primero.', 'error');
+            return;
+        }
+        if (!name || !address) {
+            showToast('Ingresa tu nombre y dirección de envío para programar el despacho.', 'error');
+            return;
+        }
+
+        let msg = `*Pedido de Café - Tienda Online (Matagalpa/Nacional)*\n`;
+        msg += `=========================================\n`;
+        msg += `👤 *Cliente:* ${name}\n`;
+        msg += `📍 *Dirección:* ${address}\n`;
+        msg += `=========================================\n\n`;
+        msg += `📋 *Detalle de la Compra:*\n`;
+
+        let subtotal = 0;
+        cart.forEach(item => {
+            msg += `- ${item.qty}x ${item.name} (C$ ${item.price}.00 c/u)\n`;
+            subtotal += item.price * item.qty;
+        });
+
+        const delivery = 60;
+        msg += `\n-----------------------------------------\n`;
+        msg += `💰 *Subtotal:* C$ ${subtotal}.00\n`;
+        msg += `📦 *Envío Estándar:* C$ ${delivery}.00\n`;
+        msg += `⭐️ *TOTAL COMPRA:* C$ ${subtotal + delivery}.00\n`;
+        msg += `-----------------------------------------\n`;
+
+        const encoded = encodeURIComponent(msg);
+        showToast('Pedido empaquetado. Redirigiendo a WhatsApp...', 'success');
+        
+        setTimeout(() => {
+            window.open(`https://wa.me/50588888888?text=${encoded}`, '_blank');
+            cart = [];
+            updateCartUI();
+            toggleCart();
+            document.getElementById('order-name').value = '';
+            document.getElementById('order-address').value = '';
+        }, 1200);
+    }
+
+    function openCourseEnrollment(courseName, price) {
+        selectedCourse.name = courseName;
+        selectedCourse.price = price;
+
+        document.getElementById('modal-selected-course').innerText = courseName;
+        document.getElementById('modal-selected-price').innerText = `C$ ${price}.00`;
+        document.getElementById('course-enrollment-modal').classList.remove('hidden');
+    }
+
+    function closeCourseEnrollment() {
+        document.getElementById('course-enrollment-modal').classList.add('hidden');
+    }
+
+    function submitCourseEnrollment() {
+        const name = document.getElementById('course-student-name').value.trim();
+        const phone = document.getElementById('course-student-phone').value.trim();
+
+        if (!name || !phone) {
+            showToast('Completa tu nombre y celular para reservar el cupo.', 'error');
+            return;
+        }
+
+        let msg = `*Inscripción de Taller de Barismo (Matagalpa)*\n`;
+        msg += `======================================\n`;
+        msg += `🎓 *Taller:* ${selectedCourse.name}\n`;
+        msg += `👤 *Estudiante:* ${name}\n`;
+        msg += `📞 *WhatsApp:* ${phone}\n`;
+        msg += `💼 *Precio:* C$ ${selectedCourse.price}.00\n`;
+        msg += `======================================\n`;
+        msg += `_¡Deseo confirmar mi registro y realizar el pago de la matrícula!_`;
+
+        const encoded = encodeURIComponent(msg);
+        showToast('Reserva exitosa. Redirigiendo para pago...', 'success');
+        
+        setTimeout(() => {
+            window.open(`https://wa.me/50588888888?text=${encoded}`, '_blank');
+            closeCourseEnrollment();
+            document.getElementById('course-student-name').value = '';
+            document.getElementById('course-student-phone').value = '';
+        }, 1200);
+    }
+
+    window.onload = function() {
+        renderProducts();
+        updateCartUI();
+        updateSubscriptionCost();
+    };
+</script>
+</body>
+</html>
