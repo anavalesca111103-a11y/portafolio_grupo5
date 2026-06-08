@@ -3,164 +3,393 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portafolio - EO Digital</title>
-    <!-- Tailwind CSS para estilizado moderno y ultra responsivo -->
+    <title>Asados Doña Tania - Sabor tradicional a las brasas</title>
+    <!-- Tailwind CSS para diseño rápido y moderno -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome para iconografía elegante -->
+    <!-- FontAwesome para iconografía comercial -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         .font-sans { font-family: 'Inter', sans-serif; }
-        .font-display { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-brand { font-family: 'Space Grotesk', sans-serif; }
         .smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .hero-gradient {
-            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.12), transparent 45%),
-                        radial-gradient(circle at bottom left, rgba(245, 158, 11, 0.08), transparent 45%);
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ea580c; border-radius: 4px; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between hero-gradient">
+<body class="bg-stone-50 text-stone-800 font-sans min-h-screen flex flex-col overflow-x-hidden">
 
-<!-- BARRA DE NAVEGACIÓN -->
-<header class="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
-    <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
-        <a href="#" class="flex items-center gap-3">
-            <div class="h-9 w-9 bg-gradient-to-tr from-indigo-500 via-purple-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/10">
-                <i class="fa-solid fa-code text-white text-sm"></i>
+<!-- Contenedor para Notificaciones de Toast -->
+<div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 max-w-sm pointer-events-none"></div>
+
+<script>
+    const CONFIG = { deliveryFee: 50 };
+    let cart = [];
+
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `p-4 rounded-xl shadow-2xl flex items-center gap-3 text-white transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto ${
+            type === 'success' ? 'bg-orange-600' : 'bg-stone-800'
+        }`;
+        
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        toast.innerHTML = `
+            <i class="fas ${icon} text-xl"></i>
+            <p class="font-medium text-sm">${message}</p>
+        `;
+        
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.remove('translate-y-2', 'opacity-0');
+        }, 10);
+
+        setTimeout(() => {
+            toast.classList.add('translate-y-2', 'opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    }
+</script>
+
+<!-- HEADER & BANNER -->
+<div class="bg-orange-600 text-white py-2 px-4 text-center text-xs font-semibold tracking-wide flex items-center justify-center gap-2">
+    <i class="fa-solid fa-motorcycle animate-bounce"></i> ¡Delivery GRATIS en toda Managua por compras mayores a C$ 400!
+</div>
+
+<header class="bg-white/90 backdrop-blur-md shadow-sm border-b border-stone-200 sticky top-0 z-40 transition-all">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+        <a href="#" class="flex items-center gap-3 group">
+            <div class="bg-orange-600 text-white p-2.5 rounded-2xl shadow-lg shadow-orange-600/20 group-hover:rotate-6 transition-transform">
+                <i class="fa-solid fa-fire-burner text-xl"></i>
             </div>
-            <h1 class="text-base font-extrabold text-white tracking-tight leading-tight font-display">EO Digital</h1>
+            <div>
+                <span class="text-[10px] uppercase font-bold text-orange-600 tracking-widest font-brand block">Sazón de Managua</span>
+                <h1 class="text-xl font-black text-stone-900 leading-tight">Asados Doña Tania</h1>
+            </div>
         </a>
-        <span class="text-[10px] font-black text-amber-500 tracking-widest uppercase font-display border border-amber-500/20 px-2.5 py-1 rounded-md bg-amber-500/5">
-            
-        </span>
+
+        <div class="flex items-center gap-4">
+            <nav class="hidden md:flex gap-6 text-sm font-semibold text-stone-600">
+                <a href="#menu-seccion" class="hover:text-orange-600 transition-colors">Menú de Hoy</a>
+                <a href="#como-ordenar" class="hover:text-orange-600 transition-colors">¿Cómo Ordenar?</a>
+                <a href="#contacto" class="hover:text-orange-600 transition-colors">Ubicación</a>
+            </nav>
+            <button onclick="toggleCart()" class="relative bg-orange-600 hover:bg-orange-700 text-white px-4 py-2.5 rounded-xl shadow-lg shadow-orange-600/20 flex items-center gap-2 font-bold smooth-transition">
+                <i class="fa-solid fa-shopping-basket text-lg"></i>
+                <span class="hidden sm:inline">Tu Pedido</span>
+                <span id="cart-badge" class="bg-white text-orange-600 px-2 py-0.5 rounded-full text-xs font-black">0</span>
+            </button>
+        </div>
     </div>
 </header>
 
-<!-- SECCIÓN DE PRESENTACIÓN -->
-<section class="max-w-4xl mx-auto px-6 pt-16 pb-12 text-center space-y-4">
-    <h2 class="text-3xl md:text-5xl font-extrabold font-display tracking-tight text-white leading-tight">
-        Portafolio de <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-amber-400">Negocios de Nicaragua</span>
-    </h2>
-    <p class="text-slate-400 text-sm md:text-base leading-relaxed max-w-xl mx-auto">
-        Explora nuestros tres modelos de sitios web optimizados, rápidos e independientes. Diseñados a medida con imágenes reales para digitalizar y hacer crecer marcas locales.
-    </p>
-</section>
-
-<!-- GUÍA DE ORGANIZACIÓN DE CARPETAS -->
-<section class="max-w-4xl mx-auto px-6 pb-10">
-    <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 shadow-xl space-y-4">
-        <div class="flex items-center gap-2.5 text-amber-500 border-b border-slate-800 pb-3">
-            <i class="fa-solid fa-folder-tree text-lg"></i>
-            <h3 class="text-xs font-bold font-display uppercase tracking-wider"></h3>
-        </div>
-        <p class="text-xs text-slate-400 leading-relaxed">
-            Para que las demostraciones en vivo abran correctamente desde este portafolio, crea una carpeta en tu computadora (ej. <code class="text-indigo-400 font-mono bg-indigo-950/40 px-1.5 py-0.5 rounded">ProyectosWeb/</code>) y organiza los archivos de la siguiente manera:
-    
-
-<!-- TARJETAS DE LOS TRES SITIOS MODELO -->
-<section class="max-w-5xl mx-auto px-6 pb-20 w-full">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        
-        <!-- PROYECTO 1: ASADOS DOÑA TANIA -->
-        <div class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden flex flex-col justify-between hover:border-orange-500/30 transition-all duration-300 group shadow-lg">
-            <div class="relative h-44 overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80" alt="Asados Doña Tania" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
-                <span class="absolute top-3 left-3 px-2.5 py-1 bg-orange-500/90 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider">Managua</span>
-            </div>
-            <div class="p-6 space-y-4 flex-grow flex flex-col justify-between">
-                <div class="space-y-2">
-                    <h3 class="text-xl font-bold font-display text-white">Asados Doña Tania</h3>
-                    <p class="text-slate-400 text-xs leading-relaxed">
-                        Menú digital con carrito de compras integrado y procesamiento de pedidos estructurados directos a WhatsApp. 100% libre de comisiones de delivery.
-                    </p>
-                </div>
-                <div class="space-y-2 pt-2 border-t border-slate-800/60">
-                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold block">Funciones Clave</span>
-                    <ul class="text-[11px] text-slate-300 space-y-1.5">
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-orange-500"></i> Carrito de Compras</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-orange-500"></i> Envío directo a WhatsApp</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-orange-500"></i> Cálculo de Delivery</li>
-                    </ul>
-                </div>
-                <div class="pt-6">
-                    <a href="sitio%201/index.html" target="_blank" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 px-4 rounded-xl text-xs font-bold text-center block transition-all shadow-md shadow-orange-950/20">
-                        Ver sitio <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i>
-                    </a>
-                </div>
+<!-- HERO SECTION -->
+<section class="relative bg-stone-950 text-white py-16 px-4 md:py-24 overflow-hidden">
+    <div class="absolute inset-0 bg-cover bg-center opacity-30" style="background-image: url('https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=1200&q=80');"></div>
+    <div class="max-w-6xl mx-auto relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        <div class="space-y-6 text-left">
+            <span class="bg-orange-600/20 text-orange-400 border border-orange-500/30 px-3.5 py-1.5 text-xs font-bold rounded-full uppercase tracking-widest inline-flex items-center gap-2">
+                <span class="w-2 h-2 bg-orange-500 rounded-full animate-ping"></span> Brasas Encendidas desde las 12 PM
+            </span>
+            <h2 class="text-4xl md:text-6xl font-black tracking-tight leading-none font-brand text-white">
+                El verdadero sabor de la <span class="text-orange-500">Fritanga Nica</span>
+            </h2>
+            <p class="text-stone-300 text-base md:text-lg leading-relaxed">
+                Disfruta de la mejor carne asada de Managua, asada al carbón de manera tradicional, con su gallopinto fresco, tajadas crujientes y un aderezo familiar inigualable. Evita comisiones de apps externas y pídelo directo a casa hoy mismo.
+            </p>
+            <div class="flex flex-wrap gap-4 pt-2">
+                <a href="#menu-seccion" class="bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 rounded-xl font-bold text-sm shadow-xl shadow-orange-950/40 inline-block transition-all transform hover:-translate-y-0.5">
+                    <i class="fa-solid fa-utensils mr-2"></i>Ver Menú de Hoy
+                </a>
+                <a href="tel:+50588888888" class="bg-stone-900 hover:bg-stone-800 text-stone-200 px-6 py-4 rounded-xl font-bold text-sm inline-block transition-all border border-stone-800">
+                    <i class="fa-solid fa-phone mr-2"></i>Llamar al Local
+                </a>
             </div>
         </div>
-
-        <!-- PROYECTO 2: RESTAURANTE EL SESTEO -->
-        <div class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden flex flex-col justify-between hover:border-indigo-500/30 transition-all duration-300 group shadow-lg">
-            <div class="relative h-44 overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=600&q=80" alt="Restaurante El Sesteo" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
-                <span class="absolute top-3 left-3 px-2.5 py-1 bg-indigo-500/90 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider">León</span>
-            </div>
-            <div class="p-6 space-y-4 flex-grow flex flex-col justify-between">
-                <div class="space-y-2">
-                    <h3 class="text-xl font-bold font-display text-white">Restaurante El Sesteo</h3>
-                    <p class="text-slate-400 text-xs leading-relaxed">
-                        Sitio web bilingüe diseñado para potenciar el turismo. Cuenta con un mapa interactivo para seleccionar y reservar mesas de forma directa y visual.
-                    </p>
-                </div>
-                <div class="space-y-2 pt-2 border-t border-slate-800/60">
-                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold block">Funciones Clave</span>
-                    <ul class="text-[11px] text-slate-300 space-y-1.5">
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-indigo-400"></i> Mapeo de Mesas en Vivo</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-indigo-400"></i> Soporte Bilingüe (ES / EN)</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-indigo-400"></i> Reservaciones de Mesa</li>
-                    </ul>
-                </div>
-                <div class="pt-6">
-                    <a href="sitio%202/index.html" target="_blank" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-4 rounded-xl text-xs font-bold text-center block transition-all shadow-md shadow-indigo-950/20">
-                        Ver sitio <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i>
-                    </a>
-                </div>
+        <div class="relative flex justify-center">
+            <div class="bg-gradient-to-tr from-orange-600/20 to-amber-500/20 p-2.5 rounded-3xl border border-orange-500/25 max-w-md w-full shadow-2xl overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?auto=format&fit=crop&w=600&q=80" alt="Asado Completo Doña Tania" class="rounded-2xl object-cover w-full h-auto shadow-inner">
             </div>
         </div>
-
-        <!-- PROYECTO 3: BARISTA COFFEE SHOP -->
-        <div class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden flex flex-col justify-between hover:border-amber-500/30 transition-all duration-300 group shadow-lg">
-            <div class="relative h-44 overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80" alt="Barista Coffee Shop" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
-                <span class="absolute top-3 left-3 px-2.5 py-1 bg-amber-500/90 text-slate-950 text-[10px] font-bold rounded-lg uppercase tracking-wider">Matagalpa</span>
-            </div>
-            <div class="p-6 space-y-4 flex-grow flex flex-col justify-between">
-                <div class="space-y-2">
-                    <h3 class="text-xl font-bold font-display text-white">Barista Coffee Shop</h3>
-                    <p class="text-slate-400 text-xs leading-relaxed">
-                        Portal de e-commerce de productos empacados, configurador dinámico de suscripciones de café personalizadas e inscripciones para talleres formativos.
-                    </p>
-                </div>
-                <div class="space-y-2 pt-2 border-t border-slate-800/60">
-                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold block">Funciones Clave</span>
-                    <ul class="text-[11px] text-slate-300 space-y-1.5">
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-amber-500"></i> Calculadora de Suscripciones</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-amber-500"></i> Tienda en Línea de Productos</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-amber-500"></i> Inscripciones de Alumnos</li>
-                    </ul>
-                </div>
-                <div class="pt-6">
-                    <a href="Sitio%203/index.html" target="_blank" class="w-full bg-amber-600 hover:bg-amber-700 text-slate-950 py-3 px-4 rounded-xl text-xs font-bold text-center block transition-all shadow-md shadow-amber-950/20">
-                        Ver sitio <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-
     </div>
 </section>
 
-<!-- PIE DE PÁGINA -->
-<footer class="border-t border-slate-900 bg-slate-950 text-slate-500 py-6 text-center text-xs">
-    <p>© 2026 Portafolio de Desarrollo Web - EO Digital. Todos los derechos reservados.</p>
-</footer>
+<!-- CÓMO FUNCIONA -->
+<section id="como-ordenar" class="py-12 bg-white border-b border-stone-100">
+    <div class="max-w-5xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="flex gap-4 items-start">
+            <div class="h-12 w-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-lg font-brand shrink-0">1</div>
+            <div>
+                <h4 class="font-extrabold text-stone-900 text-sm mb-1">Arma tu Pedido</h4>
+                <p class="text-xs text-stone-500 leading-relaxed">Selecciona tus asados favoritos del menú interactivo de abajo y agrégalos a tu bolsa de compra.</p>
+            </div>
+        </div>
+        <div class="flex gap-4 items-start">
+            <div class="h-12 w-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-lg font-brand shrink-0">2</div>
+            <div>
+                <h4 class="font-extrabold text-stone-900 text-sm mb-1">Completa tus datos</h4>
+                <p class="text-xs text-stone-500 leading-relaxed">Ingresa tu nombre y la dirección exacta de tu casa u oficina aquí mismo en la web para coordinar.</p>
+            </div>
+        </div>
+        <div class="flex gap-4 items-start">
+            <div class="h-12 w-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-lg font-brand shrink-0">3</div>
+            <div>
+                <h4 class="font-extrabold text-stone-900 text-sm mb-1">Confirma por WhatsApp</h4>
+                <p class="text-xs text-stone-500 leading-relaxed">Nuestro sistema estructurará tu pedido automáticamente y te redirigirá a WhatsApp para un despacho directo.</p>
+            </div>
+        </div>
+    </div>
+</section>
 
+<!-- MENÚ INTERACTIVO -->
+<section id="menu-seccion" class="max-w-6xl mx-auto px-4 py-16 flex-grow w-full">
+    <div class="text-center space-y-2 mb-12">
+        <span class="text-orange-600 font-extrabold uppercase tracking-widest text-xs font-brand block">Las mejores especialidades</span>
+        <h3 class="text-3xl font-black text-stone-900 font-brand">Menú a las Brasas</h3>
+        <p class="text-stone-500 max-w-md mx-auto text-sm leading-relaxed">Todos los platos tradicionales se acompañan de gallo pinto fresco, tajadas verdes de plátano o maduro frito, y ensalada de repollo agria.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="menu-items-grid"></div>
+</section>
+
+<!-- SECCIÓN CONTACTO / UBICACIÓN -->
+<section id="contacto" class="bg-stone-900 text-stone-300 py-16 px-4 border-t border-stone-800">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 text-sm leading-relaxed">
+        <div class="space-y-4">
+            <h4 class="text-white font-brand text-lg font-bold flex items-center gap-2">
+                <i class="fa-solid fa-fire text-orange-500"></i> Asados Doña Tania
+            </h4>
+            <p>Llevamos la fritanga nicaragüense a otro nivel con carnes seleccionadas y un servicio al cliente directo, rápido y honesto.</p>
+            <p class="text-xs text-stone-500">© 2026 Asados Doña Tania S.A. Todos los derechos reservados.</p>
+        </div>
+        <div class="space-y-4">
+            <h4 class="text-white font-brand text-lg font-bold flex items-center gap-2">
+                <i class="fa-solid fa-location-dot text-orange-500"></i> Ubicación en Managua
+            </h4>
+            <p>Plaza El Sol, 1 cuadra al este, 1 cuadra al sur.<br>Managua, Nicaragua.</p>
+            <p class="text-xs text-orange-400 font-bold"><i class="fa-solid fa-motorcycle mr-1.5"></i> Cobertura en toda el área urbana de Managua.</p>
+        </div>
+        <div class="space-y-4">
+            <h4 class="text-white font-brand text-lg font-bold flex items-center gap-2">
+                <i class="fa-solid fa-clock text-orange-500"></i> Horario de Atención
+            </h4>
+            <ul class="space-y-2">
+                <li class="flex justify-between"><span>Lunes a Jueves:</span> <span class="text-white">12:00 PM - 10:00 PM</span></li>
+                <li class="flex justify-between"><span>Viernes a Domingo:</span> <span class="text-white">12:00 PM - 11:30 PM</span></li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- CART DRAWER / COMPRA DIRECTA -->
+<div id="cart-drawer" class="fixed inset-0 bg-stone-950/80 backdrop-blur-sm z-50 hidden flex justify-end">
+    <div class="w-full max-w-md bg-white text-stone-800 h-full flex flex-col justify-between shadow-2xl relative">
+        <div class="p-6 border-b border-stone-100 flex justify-between items-center bg-stone-50">
+            <h4 class="text-lg font-bold text-stone-900 flex items-center gap-2 font-brand">
+                <i class="fa-solid fa-shopping-basket text-orange-600"></i> Tu Bolsa de Pedido
+            </h4>
+            <button onclick="toggleCart()" class="text-stone-400 hover:text-stone-800 p-2 rounded-lg hover:bg-stone-200 transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        
+        <!-- Contenedor dinámico de platos -->
+        <div id="cart-items-list" class="flex-grow overflow-y-auto p-6 space-y-4"></div>
+
+        <!-- Checkout & WhatsApp Compilation -->
+        <div class="p-6 border-t border-stone-100 bg-stone-50 space-y-4">
+            <div class="space-y-2 text-sm text-stone-600">
+                <div class="flex justify-between"><span>Subtotal del menú:</span><span id="cart-subtotal" class="font-extrabold text-stone-900">C$ 0.00</span></div>
+                <div class="flex justify-between"><span>Envío (Delivery local):</span><span id="cart-delivery" class="font-extrabold text-stone-900">C$ 0.00</span></div>
+                <div class="flex justify-between text-base font-extrabold text-orange-600 pt-2 border-t border-stone-200">
+                    <span>Total Estimado:</span><span id="cart-total" class="font-black text-xl">C$ 0.00</span>
+                </div>
+            </div>
+
+            <!-- Formulario de Entrega -->
+            <div class="space-y-3 pt-2">
+                <div>
+                    <label class="text-[10px] font-extrabold text-stone-700 block uppercase tracking-wider mb-1">Nombre Completo</label>
+                    <input type="text" id="order-name" placeholder="Ej. Roberto Martínez" class="w-full border border-stone-200 rounded-xl p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-600 transition-all bg-white shadow-sm">
+                </div>
+                <div>
+                    <label class="text-[10px] font-extrabold text-stone-700 block uppercase tracking-wider mb-1">Dirección Exacta de Entrega</label>
+                    <textarea id="order-address" rows="2" placeholder="Ej. Altamira d'este, de la Vicky 2c al sur, casa color verde" class="w-full border border-stone-200 rounded-xl p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-600 transition-all bg-white shadow-sm"></textarea>
+                </div>
+            </div>
+
+            <button onclick="submitOrder()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2.5 transition-all mt-4 shadow-lg shadow-emerald-700/10">
+                <i class="fa-brands fa-whatsapp text-xl"></i> Completar Pedido por WhatsApp
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Datos de platos reales con fotos espectaculares de comida representativa
+    const PRODUCTS = [
+        { id: 't1', name: 'Carne Asada Extra Familiar', price: 250, desc: 'Bistec de res premium a las brasas de carbón, gallopinto cargado, tajadas verdes fritas o plátano maduro asado con ensalada fresca.', img: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=500&q=80' },
+        { id: 't2', name: 'Cerdo Adobado', price: 220, desc: 'Costilla de cerdo tierna marinada en achiote criollo y naranja agria, servida con gallopinto recién hecho y ensalada picantita.', img: 'carne1.jpg' },
+        { id: 't3', name: 'Queso Frito con Tajadas', price: 180, desc: 'Trozos generosos de queso tradicional frito, dorado y crujiente por fuera, acompañados con una generosa ración de tajadas.', img: 'queso1.jpg' },
+        { id: 't4', name: 'Pollo Asado al Limón', price: 210, desc: 'Medio pollo jugoso asado lentamente con marinación casera de limón y ajo, gallopinto y guarnición de tajadas.', img: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=500&q=80' },
+        { id: 't5', name: 'Fritanga Especial', price: 120, desc: 'La entrada reina de la fritanga. Una gran ración de finas tajadas crujientes de plátano verde con queso fresco criollo y un trozo de carne asada.', img: 'fritanga1.avif' },
+        { id: 't6', name: 'Cacao en Leche Helado', price: 50, desc: 'Refresco típico nicaragüense preparado con cacao natural, leche entera cremosa, clavo de olor y abundante hielo molido.', img: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=500&q=80' }
+    ];
+
+    function renderMenu() {
+        const grid = document.getElementById('menu-items-grid');
+        grid.innerHTML = '';
+        PRODUCTS.forEach(p => {
+            grid.innerHTML += `
+                <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-stone-200/60 flex flex-col justify-between group hover:shadow-xl transition-all duration-300">
+                    <div>
+                        <div class="overflow-hidden relative h-48">
+                            <img src="${p.img}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 bg-stone-900/85 backdrop-blur-md text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-lg">C$ ${p.price}.00</div>
+                        </div>
+                        <div class="p-6 space-y-2">
+                            <h4 class="text-lg font-extrabold text-stone-900 font-brand">${p.name}</h4>
+                            <p class="text-stone-500 text-xs leading-relaxed">${p.desc}</p>
+                        </div>
+                    </div>
+                    <div class="p-6 pt-0 mt-auto border-t border-stone-50 flex items-center justify-between">
+                        <span class="text-orange-600 font-black text-lg">C$ ${p.price}.00</span>
+                        <button onclick="addToCart('${p.id}')" class="bg-orange-600 hover:bg-orange-700 text-white font-extrabold py-2.5 px-5 rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-md shadow-orange-600/10">
+                            <i class="fa-solid fa-plus"></i> Agregar
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function addToCart(id) {
+        const product = PRODUCTS.find(p => p.id === id);
+        const existing = cart.find(item => item.id === id);
+        if (existing) {
+            existing.qty++;
+        } else {
+            cart.push({ ...product, qty: 1 });
+        }
+        showToast(`Se agregó ${product.name} a tu pedido.`);
+        updateCartUI();
+    }
+
+    function toggleCart() {
+        document.getElementById('cart-drawer').classList.toggle('hidden');
+    }
+
+    function changeQty(id, delta) {
+        const item = cart.find(i => i.id === id);
+        if (item) {
+            item.qty += delta;
+            if (item.qty <= 0) {
+                cart = cart.filter(i => i.id !== id);
+            }
+            updateCartUI();
+        }
+    }
+
+    function updateCartUI() {
+        const container = document.getElementById('cart-items-list');
+        const badge = document.getElementById('cart-badge');
+        container.innerHTML = '';
+        
+        let subtotal = 0;
+        let totalQty = 0;
+
+        if (cart.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-16 text-stone-400 space-y-4">
+                    <i class="fa-solid fa-receipt text-5xl text-stone-200"></i>
+                    <p class="text-sm font-medium">No has agregado nada a tu pedido todavía.</p>
+                </div>
+            `;
+        } else {
+            cart.forEach(item => {
+                subtotal += item.price * item.qty;
+                totalQty += item.qty;
+                container.innerHTML += `
+                    <div class="flex justify-between items-center py-3.5 border-b border-stone-100 gap-4">
+                        <div class="flex-grow">
+                            <h5 class="text-sm font-bold text-stone-900 leading-tight">${item.name}</h5>
+                            <span class="text-xs text-orange-600 font-extrabold">C$ ${item.price}.00 c/u</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="changeQty('${item.id}', -1)" class="w-7 h-7 bg-stone-100 hover:bg-stone-200 rounded-full flex items-center justify-center text-stone-600 font-black transition-colors">-</button>
+                            <span class="text-sm font-bold w-6 text-center text-stone-900">${item.qty}</span>
+                            <button onclick="changeQty('${item.id}', 1)" class="w-7 h-7 bg-stone-100 hover:bg-stone-200 rounded-full flex items-center justify-center text-stone-600 font-black transition-colors">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        badge.innerText = totalQty;
+        
+        const delivery = (subtotal >= 400 || subtotal === 0) ? 0 : CONFIG.deliveryFee;
+        const total = subtotal + delivery;
+
+        document.getElementById('cart-subtotal').innerText = `C$ ${subtotal}.00`;
+        document.getElementById('cart-delivery').innerText = (subtotal >= 400 && subtotal > 0) ? '¡GRATIS!' : `C$ ${delivery}.00`;
+        document.getElementById('cart-total').innerText = `C$ ${total}.00`;
+    }
+
+    function submitOrder() {
+        const name = document.getElementById('order-name').value.trim();
+        const address = document.getElementById('order-address').value.trim();
+
+        if (cart.length === 0) {
+            showToast('Por favor, agrega productos al menú antes de ordenar.', 'error');
+            return;
+        }
+        if (!name || !address) {
+            showToast('Ingresa tu nombre y dirección exacta para poder programar la entrega.', 'error');
+            return;
+        }
+
+        let message = `*Pedido de Asados Doña Tania (Managua)*\n`;
+        message += `===============================\n`;
+        message += `👤 *Cliente:* ${name}\n`;
+        message += `📍 *Dirección:* ${address}\n`;
+        message += `===============================\n\n`;
+        message += `📋 *Detalle del Pedido:*\n`;
+
+        let subtotal = 0;
+        cart.forEach(item => {
+            message += `• ${item.qty}x ${item.name} (_C$ ${item.price}.00 c/u_)\n`;
+            subtotal += item.price * item.qty;
+        });
+
+        const delivery = subtotal >= 400 ? 0 : CONFIG.deliveryFee;
+        message += `\n-------------------------------\n`;
+        message += `💰 *Subtotal:* C$ ${subtotal}.00\n`;
+        message += `🛵 *Delivery:* ${delivery === 0 ? '¡GRATIS!' : 'C$ ' + delivery + '.00'}\n`;
+        message += `⭐️ *TOTAL A PAGAR:* C$ ${subtotal + delivery}.00\n`;
+        message += `-------------------------------\n`;
+        message += `_¡Enviado desde el sitio web oficial de Asados Doña Tania!_`;
+
+        const encoded = encodeURIComponent(message);
+        showToast('Pedido compilado con éxito. Redirigiendo a WhatsApp...', 'success');
+        
+        setTimeout(() => {
+            window.open(`https://wa.me/50588888888?text=${encoded}`, '_blank');
+            cart = [];
+            updateCartUI();
+            toggleCart();
+            document.getElementById('order-name').value = '';
+            document.getElementById('order-address').value = '';
+        }, 1200);
+    }
+
+    window.onload = function() {
+        renderMenu();
+        updateCartUI();
+    };
+</script>
 </body>
 </html>
